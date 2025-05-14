@@ -18,7 +18,7 @@ Before you begin, make sure you have:
 - Python 3.12+
 - [uv](https://github.com/astral-sh/uv) for environment management (or `pip`, optional)
 - Docker with GPU support (`nvidia-container-toolkit`)
-- An NVIDIA GPU (e.g., A100), if your model requires GPU acceleration
+- An NVIDIA GPU is required (e.g., A100)
 
 ## Setup
 
