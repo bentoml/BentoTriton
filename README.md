@@ -76,7 +76,7 @@ Make sure you have [logged in to BentoCloud](https://docs.bentoml.com/en/latest/
 bentoml cloud login
 ```
 
-Create it from the existing directory:
+Deploy it from the existing directory:
 
 ```bash
 bentoml deploy .
