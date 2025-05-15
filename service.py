@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import os, subprocess, typing, asyncio, sys, logging, bentoml, httpx, fastapi, pydantic
 
-from starlette.requests import Request
 from starlette.exceptions import HTTPException
-from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.responses import JSONResponse, PlainTextResponse
 
 
 logger = logging.getLogger('bentoml.service')
@@ -387,10 +386,8 @@ bento_args = bentoml.use_arguments(BentoArgs)
 
 
 kserve_app = fastapi.FastAPI()
-bento_health_app = fastapi.FastAPI()
 
 
-@bentoml.asgi_app(bento_health_app)
 @bentoml.asgi_app(kserve_app, path='/v2')
 @bentoml.service(
   name='bentotriton-service',
@@ -420,39 +417,13 @@ class Triton:
     self.process.terminate()
     await self.client.aclose()
 
-  @bento_health_app.get('/livez')
-  async def bento_livez(self, _: Request) -> Response:
-    resp = await self.triton_health_live()
-    if resp.status_code != 200:
-      raise HTTPException(status_code=resp.status_code, detail='Livez failed')
-    return PlainTextResponse('\n', status_code=200)
+  async def __is_ready__(self) -> bool:
+    resp = await self.client.get('/health/ready')
+    return resp.status_code == 200
 
-  @bento_health_app.get('/healthz')
-  async def bento_healthz(self, _: Request) -> Response:
-    return await self.bento_livez(_)
-
-  @bento_health_app.get('/readyz')
-  async def bento_readyz(self, _: Request) -> Response:
-    from bentoml._internal.container import BentoMLContainer
-
-    from _bentoml_impl.client import RemoteProxy
-
-    if BentoMLContainer.api_server_config.runner_probe.enabled.get():
-      dependency_statuses: list[typing.Coroutine[None, None, bool]] = []
-      for dependency in Triton.dependencies.values():
-        real = dependency.get()
-        if isinstance(real, RemoteProxy):
-          dependency_statuses.append(real.is_ready())
-      runners_ready = all(await asyncio.gather(*dependency_statuses))
-
-      if not runners_ready:
-        raise HTTPException(status_code=503, detail='Dependencies are not ready.')
-
-    resp = await self.triton_health_ready()
-
-    if resp != 200:
-      raise HTTPException(status_code=resp.status_code, detail='Triton server is not ready')
-    return PlainTextResponse('\n', status_code=200)
+  async def __is_alive__(self) -> bool:
+    resp = await self.client.get('/health/live')
+    return resp.status_code == 200
 
   @bentoml.on_startup
   def mount_metadata_routers(self):
@@ -463,10 +434,10 @@ class Triton:
     kserve_app.include_router(router)
 
   async def triton_health_live(self):
-    return await self.client.get('/live')
+    return await self.client.get('/health/live')
 
   async def triton_health_ready(self):
-    return await self.client.get('/ready')
+    return await self.client.get('/health/ready')
 
   @bentoml.on_startup
   def mount_models_routers(self):
