@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Triton Inference Service with BentoML"
 requires-python = ">=3.12"
 dependencies = [
-  "bentoml==1.4.11",
+  "bentoml==1.4.13",
   "fastapi==0.115.12",
   "pyyaml==6.0.2",
   "tritonclient[all]==2.56.0",
