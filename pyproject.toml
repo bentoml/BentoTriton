@@ -85,3 +85,9 @@ check_untyped_defs = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[tool.ty]
+respect-ignore-files = true
+
+[tool.ty.environment]
+python = "./.venv"
